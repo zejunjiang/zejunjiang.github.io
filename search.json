@@ -1,0 +1,44 @@
+[
+  {
+    "objectID": "tools.html",
+    "href": "tools.html",
+    "title": "Tools",
+    "section": "",
+    "text": "A collection of small web utilities I built for myself.\n\n\nAA 账单分摊助手\n录入菜品、税费、小费，分摊给朋友，自动算出每个人应付多少。支持小票拍照 OCR 识别。\nOpen tool →"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this site"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "About",
+    "section": "",
+    "text": "Welcome to my website\n\n\n\nCadence\nMatlab\nGIS\nPython\nSQL\nData Visualization\n\n\n\n\n\nFood\nTravel\nPhotography\nVideo Games\n\n\n\n\n📧 Email\n💻 GitHub"
+  },
+  {
+    "objectID": "index.html#skills",
+    "href": "index.html#skills",
+    "title": "About",
+    "section": "",
+    "text": "Cadence\nMatlab\nGIS\nPython\nSQL\nData Visualization"
+  },
+  {
+    "objectID": "index.html#interests",
+    "href": "index.html#interests",
+    "title": "About",
+    "section": "",
+    "text": "Food\nTravel\nPhotography\nVideo Games"
+  },
+  {
+    "objectID": "index.html#links",
+    "href": "index.html#links",
+    "title": "About",
+    "section": "",
+    "text": "📧 Email\n💻 GitHub"
+  }
+]

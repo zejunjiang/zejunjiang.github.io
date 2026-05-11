@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AA 账单分摊助手</title>
+  <style>
+    :root {
+      --bg-grad-1: #f7fbfa;
+      --bg-grad-2: #ecf5f1;
+      --bg-grad-3: #f6efe2;
+      --panel: #ffffff;
+      --surface: #f5faf8;
+      --surface-2: #ebf3ef;
+      --line: #d6dfdb;
+      --line-soft: #e6ece9;
+      --ink: #11201b;
+      --muted: #67756f;
+      --accent: #14776a;
+      --accent-strong: #0c5147;
+      --accent-soft: #e3f1ec;
+      --accent-glow: rgba(20, 119, 106, 0.14);
+      --gold: #b78431;
+      --gold-soft: #fbf3e1;
+      --warn: #b42318;
+      --warn-soft: #fdf2ef;
+      --warn-border: #f0c8c0;
+      --shadow-sm: 0 2px 6px rgba(15, 35, 28, 0.05);
+      --shadow-md: 0 14px 36px rgba(20, 40, 32, 0.08);
+      --shadow-lg: 0 24px 56px rgba(20, 40, 32, 0.10);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --radius-xs: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(20, 119, 106, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(183, 132, 49, 0.06) 0%, transparent 42%),
+        linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 52%, var(--bg-grad-3) 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .panel:first-child {
+      background:
+        radial-gradient(circle at 100% 0%, rgba(20, 119, 106, 0.10) 0%, transparent 50%),
+        linear-gradient(120deg, #ffffff 0%, #ebf6f1 100%);
+      border-color: #cae0d9;
+      padding: 26px 28px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(26px, 4vw, 36px);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--ink) 0%, var(--accent-strong) 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 16px;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -0.01em;
+    }
+
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 4px 10px rgba(20, 119, 106, 0.25);
+      flex-shrink: 0;
+    }
+
+    .section-tag {
+      margin-left: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 2px 9px;
+      letter-spacing: 0.01em;
+    }
+
+    p.note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    label input[type="text"],
+    label input[type="number"] {
+      color: var(--ink);
+    }
+
+    input,
+    button,
+    select {
+      font: inherit;
+    }
+
+    button,
+    input[type="text"],
+    input[type="number"],
+    select {
+      min-height: 44px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: var(--radius-xs);
+      padding: 10px 12px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input[type="number"] {
+      width: 96px;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: var(--radius-xs);
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(20, 119, 106, 0.24);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-strong);
+      box-shadow: 0 8px 22px rgba(20, 119, 106, 0.32);
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-2);
+      border-color: #c4ccc8;
+    }
+
+    .btn-danger {
+      background: var(--warn-soft);
+      border-color: var(--warn-border);
+      color: var(--warn);
+    }
+
+    .btn-danger:hover {
+      background: #fbe4dd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: var(--surface);
+      white-space: nowrap;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    tbody tr:hover {
+      background: #fafdfb;
+    }
+
+    .money {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #ffffff 0%, var(--surface) 100%);
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .metric:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .metric .value {
+      font-size: 22px;
+      font-weight: 750;
+      margin-top: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .summary-grid .metric:last-child {
+      background: linear-gradient(135deg, #11231f 0%, #0e3a32 100%);
+      border-color: #0e3a32;
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(13, 58, 50, 0.32);
+    }
+
+    .summary-grid .metric:last-child .label {
+      color: #b8d3cb;
+    }
+
+    .summary-grid .metric:last-child .value {
+      font-size: 26px;
+    }
+
+    .rate-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .rate-btn {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .rate-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
+    .rate-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-strong);
+      font-weight: 700;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .friend-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-top: 12px;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .section-label {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .people-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .person-summary-card {
+      min-height: 168px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, #ffffff 0%, #f6fbf9 100%);
+      padding: 14px 16px 14px 20px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      position: relative;
+      overflow: hidden;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .person-summary-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+    }
+
+    .person-summary-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .person-summary-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .person-summary-name {
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .person-summary-total {
+      color: var(--accent-strong);
+      font-size: 25px;
+      font-weight: 850;
+      white-space: nowrap;
+      letter-spacing: -0.02em;
+    }
+
+    .person-summary-breakdown {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .dish-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 92px;
+      overflow: auto;
+      align-content: flex-start;
+    }
+
+    .dish-pill {
+      border: 1px solid #c2dcd5;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #134c43;
+      padding: 4px 10px;
+      font-size: 12px;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    .dish-pill-empty {
+      border-style: dashed;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .assignment-details {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .assignment-details summary {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      cursor: pointer;
+      color: var(--accent-strong);
+      font-weight: 700;
+      list-style-position: inside;
+      user-select: none;
+      transition: background 140ms ease;
+    }
+
+    .assignment-details summary:hover {
+      background: var(--surface-2);
+    }
+
+    .assignment-details[open] {
+      padding-bottom: 14px;
+    }
+
+    .assignment-details[open] summary {
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 4px;
+    }
+
+    .assignment-details #friendsContainer {
+      padding: 0 14px;
+    }
+
+    .add-person-box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, var(--surface) 0%, #fff 100%);
+      padding: 14px 16px;
+      display: grid;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .new-dish-picker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .new-dish-row {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xs);
+      background: #fff;
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    .new-dish-row:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .new-dish-name {
+      font-weight: 700;
+      line-height: 1.35;
+      font-size: 14px;
+    }
+
+    .new-dish-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .friend-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .friend-name {
+      font-weight: 750;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    .owe {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-xs);
+      background: linear-gradient(135deg, var(--accent-soft) 0%, #d8ece5 100%);
+      border: 1px solid #b9ddd5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .owe .money {
+      font-size: 18px;
+      color: var(--accent-strong);
+    }
+
+    .warning {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-xs);
+      background: var(--warn-soft);
+      border: 1px solid var(--warn-border);
+      color: var(--warn);
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.55;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 12px 0;
+      text-align: left;
+    }
+
+    .ocr-box {
+      border: 1px dashed var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      background: linear-gradient(180deg, var(--surface) 0%, #fff 100%);
+    }
+
+    .ocr-status {
+      margin-top: 10px;
+      font-size: 13.5px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .ocr-status.error {
+      color: var(--warn);
+    }
+
+    .ocr-preview-wrap {
+      margin-top: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .ocr-preview {
+      display: block;
+      max-width: 100%;
+      max-height: 280px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xs);
+      background: #fff;
+    }
+
+    .ocr-raw {
+      width: 100%;
+      min-height: 140px;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xs);
+      padding: 10px 12px;
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      resize: vertical;
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 18px 12px 36px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .panel:first-child {
+        padding: 22px 20px;
+      }
+
+      th:nth-child(5),
+      td:nth-child(5) {
+        display: none;
+      }
+
+      input[type="number"] {
+        width: 84px;
+      }
+
+      .owe {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .person-summary-total {
+        font-size: 22px;
+      }
+
+      .summary-grid .metric:last-child .value {
+        font-size: 23px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="panel">
+      <h1>AA 账单分摊助手</h1>
+      <p class="note">先录入菜品和饮料，再填写税费/小费，最后给每位朋友勾选或填写对应项目数量，系统会自动算出每个人应付金额。</p>
+    </section>
+
+    <section class="panel">
+      <h2><span class="section-num">1</span>菜品与饮料</h2>
+      <div class="row" style="margin-bottom: 8px;">
+        <button id="addItemBtn" class="btn-primary">+ 添加项目</button>
+        <button id="clearItemsBtn" class="btn-ghost">清空项目</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="itemsTable">
+          <thead>
+            <tr>
+              <th>项目名</th>
+              <th>单价</th>
+              <th>数量</th>
+              <th>小计</th>
+              <th>已分配/总数</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTbody"></tbody>
+        </table>
+      </div>
+      <div id="itemEmpty" class="empty">还没有项目，点击“添加项目”开始。</div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="section-num">2</span>小票拍照识别导入<span class="section-tag">可选</span></h2>
+      <div class="ocr-box">
+        <div class="row" style="margin-bottom: 8px;">
+          <input id="receiptImageInput" type="file" accept="image/*" capture="environment" />
+        </div>
+        <div class="row" style="margin-bottom: 8px;">
+          <label>识别模式
+            <select id="ocrModeSelect">
+              <option value="enhanced" selected>增强（推荐）</option>
+              <option value="bw">黑白高对比</option>
+              <option value="original">原图</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" style="margin-bottom: 8px;">
+          <label><input id="clearItemsBeforeImport" type="checkbox" /> 导入前清空现有项目</label>
+          <button id="ocrImportBtn" class="btn-primary">识别到文本框</button>
+          <button id="reparseOcrTextBtn" class="btn-ghost">确认文本并添加到项目</button>
+        </div>
+        <p class="note">先识别到文本框，确认或修改后，再按“菜名 + 数量 + 价格”添加到项目栏。</p>
+        <div class="ocr-preview-wrap">
+          <div class="note" id="ocrPreviewLabel">处理后图片预览会显示在这里。</div>
+          <canvas id="receiptPreviewCanvas" class="ocr-preview" hidden></canvas>
+        </div>
+        <textarea id="ocrRawText" class="ocr-raw" placeholder="OCR 识别出的原文会显示在这里。你可以手动修正成类似：麻婆豆腐 2 12，然后点击“确认文本并添加到项目”。"></textarea>
+        <div id="ocrStatus" class="ocr-status" role="status" aria-live="polite">请先上传小票图片，再点击“识别到文本框”。</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="section-num">3</span>税费与小费</h2>
+      <div class="row" style="margin-bottom: 6px;">
+        <span>税费比例：</span>
+        <div class="rate-buttons">
+          <button type="button" class="rate-btn tax-btn" data-tax="7.75">7.75%</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 10px;">
+        <label>自定义税费比例（%）
+          <input id="taxRateInput" type="text" inputmode="decimal" value="0" />
+        </label>
+      </div>
+
+      <div class="row" style="margin-bottom: 6px;">
+        <span>小费比例：</span>
+        <div class="rate-buttons">
+          <button type="button" class="rate-btn tip-btn" data-tip="15">15%</button>
+          <button type="button" class="rate-btn tip-btn" data-tip="18">18%</button>
+          <button type="button" class="rate-btn tip-btn" data-tip="20">20%</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>自定义小费比例（%）
+          <input id="tipRateInput" type="text" inputmode="decimal" value="15" />
+        </label>
+      </div>
+
+      <div class="row" style="margin-top: 10px; margin-bottom: 6px;">
+        <span>付款方式：</span>
+        <div class="rate-buttons">
+          <button type="button" class="rate-btn payment-btn" data-payment="cash">Cash</button>
+          <button type="button" class="rate-btn payment-btn" data-payment="noncash">Non-cash</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Non-cash 加价金额
+          <input id="nonCashAmountInput" type="text" inputmode="decimal" value="0" />
+        </label>
+      </div>
+
+      <div class="row" style="margin-top: 8px;">
+        <span>Non-cash 分摊人数：</span>
+        <button id="nonCashSplitMinusBtn" type="button" class="btn-ghost" aria-label="减少 Non-cash 分摊人数">-</button>
+        <input id="nonCashSplitCountInput" type="number" min="1" step="1" value="1" />
+        <button id="nonCashSplitPlusBtn" type="button" class="btn-ghost" aria-label="增加 Non-cash 分摊人数">+</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="metric">
+          <div class="label">菜品/饮料小计</div>
+          <div class="value money" id="subtotalValue">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">税费金额</div>
+          <div class="value money" id="taxValue">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">小费金额</div>
+          <div class="value money" id="tipValue">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">Non-cash 加价</div>
+          <div class="value money" id="nonCashValue">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">每人 Non-cash</div>
+          <div class="value money" id="nonCashPerPersonValue">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">总账单金额</div>
+          <div class="value money" id="totalValue">$0.00</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2><span class="section-num">4</span>朋友分摊</h2>
+      <div class="add-person-box">
+        <div class="row">
+          <input id="friendNameInput" type="text" placeholder="输入朋友名字" />
+          <button id="addFriendBtn" class="btn-primary">+ 添加朋友并分配菜品</button>
+        </div>
+        <div class="section-label" style="margin-top: 0;">这个人吃了哪些</div>
+        <div id="newFriendDishPicker" class="new-dish-picker"></div>
+        <div id="newFriendDishEmpty" class="empty">先添加菜品，再给朋友选择吃了哪些。</div>
+      </div>
+      <p class="note">说明：每位朋友按相同顺序计算：项目金额 -> 税费份额 -> 每人 Non-cash 份额 -> 小费。</p>
+      <div class="section-label">人员总览</div>
+      <div id="friendOverview" class="people-overview" aria-live="polite"></div>
+      <details id="assignmentDetails" class="assignment-details">
+        <summary>编辑分配明细</summary>
+        <div id="friendsContainer"></div>
+      </details>
+      <div id="friendEmpty" class="empty">还没有朋友，先添加朋友。</div>
+      <div id="globalWarning" class="warning" style="display: none;"></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script>
+    const state = {
+      items: [],
+      friends: [],
+      taxRate: 0,
+      tipRate: 15,
+      paymentMethod: "cash",
+      nonCashAmount: 0,
+      nonCashSplitCount: 1
+    };
+
+    let ocrWorking = false;
+
+    const els = {
+      addItemBtn: document.getElementById("addItemBtn"),
+      clearItemsBtn: document.getElementById("clearItemsBtn"),
+      itemsTbody: document.getElementById("itemsTbody"),
+      itemEmpty: document.getElementById("itemEmpty"),
+      receiptImageInput: document.getElementById("receiptImageInput"),
+      ocrModeSelect: document.getElementById("ocrModeSelect"),
+      clearItemsBeforeImport: document.getElementById("clearItemsBeforeImport"),
+      ocrImportBtn: document.getElementById("ocrImportBtn"),
+      reparseOcrTextBtn: document.getElementById("reparseOcrTextBtn"),
+      receiptPreviewCanvas: document.getElementById("receiptPreviewCanvas"),
+      ocrPreviewLabel: document.getElementById("ocrPreviewLabel"),
+      ocrRawText: document.getElementById("ocrRawText"),
+      ocrStatus: document.getElementById("ocrStatus"),
+      taxRateInput: document.getElementById("taxRateInput"),
+      taxValue: document.getElementById("taxValue"),
+      tipRateInput: document.getElementById("tipRateInput"),
+      nonCashAmountInput: document.getElementById("nonCashAmountInput"),
+      nonCashSplitMinusBtn: document.getElementById("nonCashSplitMinusBtn"),
+      nonCashSplitCountInput: document.getElementById("nonCashSplitCountInput"),
+      nonCashSplitPlusBtn: document.getElementById("nonCashSplitPlusBtn"),
+      subtotalValue: document.getElementById("subtotalValue"),
+      tipValue: document.getElementById("tipValue"),
+      nonCashValue: document.getElementById("nonCashValue"),
+      nonCashPerPersonValue: document.getElementById("nonCashPerPersonValue"),
+      totalValue: document.getElementById("totalValue"),
+      friendNameInput: document.getElementById("friendNameInput"),
+      addFriendBtn: document.getElementById("addFriendBtn"),
+      newFriendDishPicker: document.getElementById("newFriendDishPicker"),
+      newFriendDishEmpty: document.getElementById("newFriendDishEmpty"),
+      friendOverview: document.getElementById("friendOverview"),
+      friendsContainer: document.getElementById("friendsContainer"),
+      friendEmpty: document.getElementById("friendEmpty"),
+      globalWarning: document.getElementById("globalWarning"),
+      taxButtons: Array.from(document.querySelectorAll(".tax-btn")),
+      tipButtons: Array.from(document.querySelectorAll(".tip-btn")),
+      paymentButtons: Array.from(document.querySelectorAll(".payment-btn"))
+    };
+
+    function createItem(name = "", price = 0, qty = 1) {
+      return {
+        id: crypto.randomUUID(),
+        name,
+        price,
+        qty
+      };
+    }
+
+    function createFriend(name = "") {
+      return {
+        id: crypto.randomUUID(),
+        name,
+        allocations: {}
+      };
+    }
+
+    function toNumber(value, fallback = 0) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function toDecimalInputNumber(value, fallback = 0) {
+      const normalized = String(value).replace(",", ".").trim();
+      if (!normalized || normalized === ".") return fallback;
+      const n = Number(normalized);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function syncDecimalInput(input, value) {
+      if (document.activeElement !== input) {
+        input.value = String(value);
+      }
+    }
+
+    function money(n) {
+      return `$${n.toFixed(2)}`;
+    }
+
+    function formatQty(n) {
+      return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+    }
+
+    function round2(n) {
+      return Math.round(n * 100) / 100;
+    }
+
+    function setOcrStatus(message, isError = false) {
+      els.ocrStatus.textContent = message;
+      els.ocrStatus.classList.toggle("error", isError);
+    }
+
+    function updateOcrImportBtnState() {
+      const hasFile = Boolean(els.receiptImageInput.files && els.receiptImageInput.files[0]);
+      els.ocrImportBtn.disabled = !hasFile || ocrWorking;
+      els.reparseOcrTextBtn.disabled = !els.ocrRawText.value.trim() || ocrWorking;
+    }
+
+    function loadImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(img);
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("图片加载失败"));
+        };
+
+        img.src = url;
+      });
+    }
+
+    function getReceiptScale(width, height) {
+      const longest = Math.max(width, height);
+      if (longest < 1400) return Math.min(3, 1600 / longest);
+      if (longest > 2600) return 2600 / longest;
+      return 1;
+    }
+
+    function processReceiptPixels(canvas, mode) {
+      if (mode === "original") return;
+
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      let total = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        total += gray;
+      }
+
+      const average = total / (data.length / 4);
+      const contrast = mode === "bw" ? 95 : 55;
+      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+      for (let i = 0; i < data.length; i += 4) {
+        let gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        gray = Math.max(0, Math.min(255, factor * (gray - 128) + 128));
+
+        if (mode === "bw") {
+          gray = gray > average - 12 ? 255 : 0;
+        }
+
+        data[i] = gray;
+        data[i + 1] = gray;
+        data[i + 2] = gray;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    async function buildReceiptCanvas(file, mode) {
+      const img = await loadImageFromFile(file);
+      const scale = getReceiptScale(img.naturalWidth || img.width, img.naturalHeight || img.height);
+      const width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+      const height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      processReceiptPixels(canvas, mode);
+
+      return canvas;
+    }
+
+    function copyCanvasToPreview(canvas, mode) {
+      const preview = els.receiptPreviewCanvas;
+      const ctx = preview.getContext("2d");
+      preview.width = canvas.width;
+      preview.height = canvas.height;
+      ctx.clearRect(0, 0, preview.width, preview.height);
+      ctx.drawImage(canvas, 0, 0);
+      preview.hidden = false;
+
+      const modeNames = {
+        enhanced: "增强预览",
+        bw: "黑白高对比预览",
+        original: "原图预览"
+      };
+      els.ocrPreviewLabel.textContent = `${modeNames[mode] || "图片预览"}：${canvas.width} x ${canvas.height}`;
+    }
+
+    async function previewSelectedReceipt() {
+      const file = els.receiptImageInput.files && els.receiptImageInput.files[0];
+      if (!file) {
+        els.receiptPreviewCanvas.hidden = true;
+        els.ocrPreviewLabel.textContent = "处理后图片预览会显示在这里。";
+        return;
+      }
+
+      try {
+        const mode = els.ocrModeSelect.value;
+        const canvas = await buildReceiptCanvas(file, mode);
+        copyCanvasToPreview(canvas, mode);
+      } catch (error) {
+        const detail = error && error.message ? error.message : String(error);
+        setOcrStatus(`图片预览失败：${detail}`, true);
+      }
+    }
+
+    function normalizeReceiptLine(line) {
+      return line
+        .replace(/[０-９]/g, char => String.fromCharCode(char.charCodeAt(0) - 0xfee0))
+        .replace(/[\u3000\t]/g, " ")
+        .replace(/[，]/g, ",")
+        .replace(/[：]/g, ":")
+        .replace(/[（]/g, "(")
+        .replace(/[）]/g, ")")
+        .replace(/[—–]/g, "-")
+        .replace(/[×X＊*]/g, "x")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function isLikelyMetaLine(lineLower) {
+      const keywords = [
+        "合计", "小计", "税", "服务费", "小费", "折扣", "优惠", "应收", "实收", "找零", "总计",
+        "订单", "单号", "流水", "日期", "时间", "桌号", "人数",
+        "total", "subtotal", "tax", "tip", "discount", "change", "cash", "invoice", "table"
+      ];
+      return keywords.some(keyword => lineLower.includes(keyword));
+    }
+
+    function isLikelyQuantity(n) {
+      return n > 0 && n <= 200 && Math.abs(n - Math.round(n)) < 0.0001;
+    }
+
+    function getReceiptLineEntries(ocrData) {
+      if (ocrData && Array.isArray(ocrData.lines) && ocrData.lines.length) {
+        return ocrData.lines.map(line => ({
+          text: line.text || "",
+          confidence: line.confidence
+        }));
+      }
+
+      const text = typeof ocrData === "string" ? ocrData : (ocrData && ocrData.text) || "";
+      return text.split(/\r?\n/g).map(line => ({ text: line, confidence: 100 }));
+    }
+
+    function normalizeConfidence(confidence) {
+      const n = Number(confidence);
+      if (!Number.isFinite(n)) return 100;
+      return n <= 1 ? n * 100 : n;
+    }
+
+    function extractNumberTokens(line) {
+      return Array.from(line.matchAll(/\d+(?:\.\d+)?/g))
+        .map(match => ({
+          raw: match[0],
+          value: Number(match[0]),
+          index: match.index || 0,
+          end: (match.index || 0) + match[0].length
+        }))
+        .filter(token => Number.isFinite(token.value) && token.value > 0);
+    }
+
+    function cleanReceiptName(name) {
+      return name
+        .replace(/[¥￥$]/g, " ")
+        .replace(/^[\s\d.:-]+/, "")
+        .replace(/[\s:+=<>%;&|]+$/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    function isLikelyItemName(name) {
+      const compact = name.replace(/\s/g, "");
+      if (compact.length < 2 || compact.length > 42) return false;
+      if (/[<>{}\[\]=%;&|]/.test(compact)) return false;
+      if (/^[xX+\-.,:;'"`~!@#$%^&*()_]+$/.test(compact)) return false;
+
+      const meaningful = compact.match(/[\u4e00-\u9fffA-Za-z]/g) || [];
+      if (meaningful.length < 2) return false;
+      if (meaningful.length / compact.length < 0.5) return false;
+
+      const lower = compact.toLowerCase();
+      const blocked = ["and", "or", "qty", "qnty", "price", "amount", "item", "order"];
+      if (blocked.includes(lower)) return false;
+
+      return true;
+    }
+
+    function extractItemName(line, tokens) {
+      if (!tokens.length) return "";
+
+      if (tokens[0].index > 0) {
+        return cleanReceiptName(line.slice(0, tokens[0].index));
+      }
+
+      if (tokens.length >= 2) {
+        return cleanReceiptName(line.slice(tokens[0].end, tokens[1].index));
+      }
+
+      return "";
+    }
+
+    function parseQtyAndUnitPrice(tokens) {
+      if (tokens.length >= 3) {
+        const amount = tokens[tokens.length - 1].value;
+        const a = tokens[tokens.length - 3].value;
+        const b = tokens[tokens.length - 2].value;
+        const tolerance = Math.max(0.08, amount * 0.08);
+        let best = null;
+
+        for (const candidate of [{ qty: a, unit: b }, { qty: b, unit: a }]) {
+          if (!isLikelyQuantity(candidate.qty) || candidate.unit <= 0) continue;
+          const error = Math.abs(candidate.qty * candidate.unit - amount);
+          if (error <= tolerance && (!best || error < best.error)) {
+            best = { ...candidate, error };
+          }
+        }
+
+        if (best) {
+          return { qty: round2(best.qty), unitPrice: round2(best.unit) };
+        }
+      }
+
+      if (tokens.length >= 2) {
+        const a = tokens[tokens.length - 2].value;
+        const b = tokens[tokens.length - 1].value;
+
+        if (isLikelyQuantity(a)) {
+          return { qty: round2(a), unitPrice: round2(b) };
+        }
+
+        if (isLikelyQuantity(b) && a > b) {
+          return { qty: round2(b), unitPrice: round2(a) };
+        }
+      }
+
+      if (tokens.length === 1) {
+        return { qty: 1, unitPrice: round2(tokens[0].value) };
+      }
+
+      return null;
+    }
+
+    function parseReceiptData(ocrData) {
+      const entries = getReceiptLineEntries(ocrData)
+        .map(entry => ({
+          text: normalizeReceiptLine(entry.text || ""),
+          confidence: normalizeConfidence(entry.confidence)
+        }))
+        .filter(entry => entry.text);
+
+      const parsedItems = [];
+      let skipped = 0;
+      let readableRows = 0;
+
+      for (const entry of entries) {
+        const line = entry.text;
+        const lower = line.toLowerCase();
+        if (isLikelyMetaLine(lower)) {
+          skipped += 1;
+          continue;
+        }
+
+        const tokens = extractNumberTokens(line);
+        if (tokens.length < 2) {
+          skipped += 1;
+          continue;
+        }
+        readableRows += 1;
+
+        const name = extractItemName(line, tokens);
+        if (!isLikelyItemName(name)) {
+          skipped += 1;
+          continue;
+        }
+
+        const parsed = parseQtyAndUnitPrice(tokens);
+        if (!parsed || parsed.qty <= 0 || parsed.unitPrice <= 0) {
+          skipped += 1;
+          continue;
+        }
+
+        parsedItems.push({
+          name,
+          qty: round2(parsed.qty),
+          price: round2(parsed.unitPrice)
+        });
+      }
+
+      return { items: parsedItems, skipped, readableRows };
+    }
+
+    function parseReceiptText(text) {
+      return parseReceiptData(text).items;
+    }
+
+    function importParsedReceipt(parsedReceipt, sourceLabel = "OCR 原文") {
+      const importedItems = parsedReceipt.items;
+      if (!importedItems.length) {
+        setOcrStatus(`${sourceLabel}里没有提取出可导入项目。请把原文调整成“菜名 数量 价格”的格式再试。`, true);
+        return false;
+      }
+
+      if (els.clearItemsBeforeImport.checked) {
+        state.items = [];
+      }
+
+      for (const item of importedItems) {
+        state.items.push(createItem(item.name, item.price, item.qty));
+      }
+
+      syncAllocationsForAllFriends();
+      render();
+      setOcrStatus(`导入完成：已按“名字+数量+价格”导入 ${importedItems.length} 个项目。请检查数量和单价是否准确。`);
+      return true;
+    }
+
+    async function importItemsFromReceiptImage() {
+      if (typeof Tesseract === "undefined") {
+        setOcrStatus("OCR 库加载失败，请确认网络可访问 jsdelivr CDN。", true);
+        return;
+      }
+
+      const file = els.receiptImageInput.files && els.receiptImageInput.files[0];
+      if (!file) {
+        setOcrStatus("请先选择一张小票图片。", true);
+        return;
+      }
+
+      ocrWorking = true;
+      updateOcrImportBtnState();
+      setOcrStatus("正在初始化 OCR...");
+
+      try {
+        const mode = els.ocrModeSelect.value;
+        const ocrCanvas = await buildReceiptCanvas(file, mode);
+        copyCanvasToPreview(ocrCanvas, mode);
+        setOcrStatus("图片已增强，正在识别文字...");
+
+        const result = await Tesseract.recognize(ocrCanvas, "chi_sim+eng", {
+          logger: info => {
+            if (info.status === "recognizing text") {
+              const progress = Math.round((info.progress || 0) * 100);
+              setOcrStatus(`正在识别文字：${progress}%`);
+            } else {
+              setOcrStatus(`处理中：${info.status}`);
+            }
+          }
+        });
+
+        els.ocrRawText.value = result.data.text || "";
+        updateOcrImportBtnState();
+
+        const parsedReceipt = parseReceiptData(result.data || "");
+        if (!parsedReceipt.items.length) {
+          setOcrStatus(`OCR 原文已放入文本框，但暂时没有提取出项目。你可以手动改成“菜名 数量 价格”后再确认添加。`, true);
+          return;
+        }
+
+        setOcrStatus(`OCR 原文已放入文本框，当前可提取 ${parsedReceipt.items.length} 个项目。确认无误后点击“确认文本并添加到项目”。`);
+      } catch (error) {
+        const detail = error && error.message ? error.message : String(error);
+        setOcrStatus(`识别失败：${detail}`, true);
+      } finally {
+        ocrWorking = false;
+        updateOcrImportBtnState();
+      }
+    }
+
+    function syncAllocationsForAllFriends() {
+      for (const friend of state.friends) {
+        for (const item of state.items) {
+          if (typeof friend.allocations[item.id] === "undefined") {
+            friend.allocations[item.id] = 0;
+          }
+        }
+
+        for (const itemId of Object.keys(friend.allocations)) {
+          if (!state.items.some(item => item.id === itemId)) {
+            delete friend.allocations[itemId];
+          }
+        }
+      }
+    }
+
+    function getItemAssignedQty(itemId) {
+      return state.friends.reduce((sum, friend) => sum + toNumber(friend.allocations[itemId]), 0);
+    }
+
+    function getSubtotal() {
+      return state.items.reduce((sum, item) => {
+        const line = Math.max(0, toNumber(item.price)) * Math.max(0, toNumber(item.qty));
+        return sum + line;
+      }, 0);
+    }
+
+    function getTaxAmount(subtotal) {
+      return subtotal * (Math.max(0, state.taxRate) / 100);
+    }
+
+    function getTipAmount(tipBase) {
+      return tipBase * (Math.max(0, state.tipRate) / 100);
+    }
+
+    function getNonCashAmount() {
+      if (state.paymentMethod !== "noncash") return 0;
+      return Math.max(0, state.nonCashAmount);
+    }
+
+    function getNonCashSplitCount() {
+      return Math.max(1, Math.floor(toNumber(state.nonCashSplitCount, 1)));
+    }
+
+    function getBillParts() {
+      const subtotal = getSubtotal();
+      const tax = getTaxAmount(subtotal);
+      const nonCash = getNonCashAmount();
+      const nonCashSplitCount = getNonCashSplitCount();
+      const nonCashPerPerson = nonCash / nonCashSplitCount;
+      const beforeTip = subtotal + tax + nonCash;
+      const tip = getTipAmount(beforeTip);
+      const total = beforeTip + tip;
+
+      return {
+        subtotal,
+        tax,
+        nonCash,
+        nonCashSplitCount,
+        nonCashPerPerson,
+        beforeTip,
+        tip,
+        total
+      };
+    }
+
+    function getFriendSubtotal(friend) {
+      return state.items.reduce((sum, item) => {
+        const qty = Math.max(0, toNumber(friend.allocations[item.id]));
+        return sum + Math.max(0, toNumber(item.price)) * qty;
+      }, 0);
+    }
+
+    function getFriendOwe(friend) {
+      const bill = getBillParts();
+      const friendSubtotal = getFriendSubtotal(friend);
+      const ratio = bill.subtotal > 0 ? friendSubtotal / bill.subtotal : 0;
+      const friendTax = bill.tax * ratio;
+      const friendNonCash = bill.nonCashPerPerson;
+      const friendTip = getTipAmount(friendSubtotal + friendTax + friendNonCash);
+      const friendExtra = friendTax + friendNonCash + friendTip;
+
+      return {
+        subtotal: friendSubtotal,
+        extra: friendExtra,
+        total: friendSubtotal + friendExtra
+      };
+    }
+
+    function sanitizeData() {
+      state.taxRate = Math.max(0, toNumber(state.taxRate));
+      state.tipRate = Math.max(0, toNumber(state.tipRate));
+      state.nonCashAmount = Math.max(0, toNumber(state.nonCashAmount));
+      state.nonCashSplitCount = getNonCashSplitCount();
+      if (!["cash", "noncash"].includes(state.paymentMethod)) {
+        state.paymentMethod = "cash";
+      }
+      for (const item of state.items) {
+        item.price = Math.max(0, toNumber(item.price));
+        item.qty = Math.max(0, toNumber(item.qty));
+      }
+
+      syncAllocationsForAllFriends();
+
+      for (const friend of state.friends) {
+        for (const item of state.items) {
+          const maxQty = Math.max(0, toNumber(item.qty));
+          const raw = Math.max(0, toNumber(friend.allocations[item.id]));
+          friend.allocations[item.id] = Math.min(raw, maxQty);
+        }
+      }
+    }
+
+    function renderItems() {
+      els.itemsTbody.innerHTML = "";
+      els.itemEmpty.style.display = state.items.length ? "none" : "block";
+
+      state.items.forEach(item => {
+        const tr = document.createElement("tr");
+        const assigned = getItemAssignedQty(item.id);
+
+        tr.innerHTML = `
+          <td>
+            <input type="text" value="${escapeHtml(item.name)}" data-item-name="${item.id}" placeholder="例如：蒜蓉虾" style="width: 180px;" />
+          </td>
+          <td>
+            <input type="number" min="0" step="0.01" value="${item.price}" data-item-price="${item.id}" />
+          </td>
+          <td>
+            <input type="number" min="0" step="0.25" value="${item.qty}" data-item-qty="${item.id}" />
+          </td>
+          <td class="money" data-item-subtotal="${item.id}">${money(item.price * item.qty)}</td>
+          <td class="money" data-item-assigned="${item.id}">${assigned.toFixed(2)} / ${item.qty.toFixed(2)}</td>
+          <td>
+            <button class="btn-danger" data-remove-item="${item.id}">删除</button>
+          </td>
+        `;
+
+        els.itemsTbody.appendChild(tr);
+      });
+    }
+
+    function getRemainingQty(itemId, excludeFriendId = null) {
+      const item = state.items.find(x => x.id === itemId);
+      if (!item) return 0;
+      const maxQty = Math.max(0, toNumber(item.qty));
+      const otherAllocated = state.friends.reduce((sum, f) => {
+        if (f.id === excludeFriendId) return sum;
+        return sum + Math.max(0, toNumber(f.allocations[itemId]));
+      }, 0);
+      return Math.max(0, maxQty - otherAllocated);
+    }
+
+    function renderNewFriendPicker() {
+      els.newFriendDishPicker.innerHTML = "";
+      els.newFriendDishEmpty.style.display = state.items.length ? "none" : "block";
+
+      state.items.forEach(item => {
+        const remaining = getRemainingQty(item.id);
+        const row = document.createElement("div");
+        row.className = "new-dish-row";
+        row.innerHTML = `
+          <div>
+            <div class="new-dish-name" data-picker-name="${item.id}">${escapeHtml(item.name || "(未命名项目)")}</div>
+            <div class="new-dish-meta" data-picker-meta="${item.id}">${money(item.price)} / 份，剩 ${formatQty(remaining)} / 共 ${formatQty(item.qty)} 份</div>
+          </div>
+          <input type="number" min="0" step="0.25" max="${remaining}" value="0" data-new-friend-item="${item.id}" aria-label="${escapeHtml(item.name || "未命名项目")} 的数量" />
+        `;
+
+        els.newFriendDishPicker.appendChild(row);
+      });
+    }
+
+    function getFriendDishes(friend) {
+      return state.items
+        .map(item => {
+          const qty = Math.max(0, toNumber(friend.allocations[item.id]));
+          return {
+            name: item.name || "(未命名项目)",
+            qty,
+            amount: Math.max(0, toNumber(item.price)) * qty
+          };
+        })
+        .filter(dish => dish.qty > 0);
+    }
+
+    function renderFriendOverview() {
+      els.friendOverview.innerHTML = "";
+
+      state.friends.forEach(friend => {
+        const card = document.createElement("div");
+        const owe = getFriendOwe(friend);
+        const dishes = getFriendDishes(friend);
+        const dishMarkup = dishes.length
+          ? dishes.map(dish => `
+              <span class="dish-pill">${escapeHtml(dish.name)} x ${formatQty(dish.qty)}</span>
+            `).join("")
+          : `<span class="dish-pill dish-pill-empty">还没有分配菜品</span>`;
+
+        card.className = "person-summary-card";
+        card.innerHTML = `
+          <div class="person-summary-top">
+            <div>
+              <div class="person-summary-name">${escapeHtml(friend.name || "未命名朋友")}</div>
+              <div class="person-summary-breakdown">菜品 ${money(owe.subtotal)} + 分摊 ${money(owe.extra)}</div>
+            </div>
+            <div class="person-summary-total money">${money(owe.total)}</div>
+          </div>
+          <div class="dish-list">${dishMarkup}</div>
+        `;
+
+        els.friendOverview.appendChild(card);
+      });
+    }
+
+    function renderFriends() {
+      renderFriendOverview();
+      els.friendsContainer.innerHTML = "";
+      els.friendEmpty.style.display = state.friends.length ? "none" : "block";
+
+      state.friends.forEach(friend => {
+        const card = document.createElement("div");
+        card.className = "friend-card";
+
+        const owe = getFriendOwe(friend);
+
+        const tableRows = state.items.map(item => {
+          const alloc = toNumber(friend.allocations[item.id]);
+          const line = Math.max(0, toNumber(item.price)) * alloc;
+          const remainingForThisFriend = getRemainingQty(item.id, friend.id) + Math.max(0, alloc);
+          return `
+            <tr>
+              <td data-friend-item-name="${item.id}">${escapeHtml(item.name || "(未命名项目)")}</td>
+              <td class="money" data-friend-item-price="${item.id}">${money(item.price)}</td>
+              <td>
+                <input type="number" min="0" step="0.25" max="${remainingForThisFriend}" value="${alloc}" data-alloc-friend="${friend.id}" data-alloc-item="${item.id}" />
+              </td>
+              <td class="money" data-friend-line="${friend.id}:${item.id}">${money(line)}</td>
+            </tr>
+          `;
+        }).join("");
+
+        card.innerHTML = `
+          <div class="friend-title">
+            <div class="friend-name">${escapeHtml(friend.name || "未命名朋友")}</div>
+            <button class="btn-danger" data-remove-friend="${friend.id}">删除朋友</button>
+          </div>
+
+          ${state.items.length ? `
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>项目</th>
+                    <th>单价</th>
+                    <th>此人数量</th>
+                    <th>此项金额</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          ` : `<div class="empty">先添加项目，再给 ${escapeHtml(friend.name || "这位朋友")} 分配。</div>`}
+
+          <div class="owe">
+            <span>应付金额（含税费、小费和付款加价）</span>
+            <span class="money" data-friend-total="${friend.id}">${money(owe.total)}</span>
+          </div>
+          <div class="note" style="margin-top: 6px;" data-friend-note="${friend.id}">项目金额 ${money(owe.subtotal)} + 税费/小费/付款加价分摊 ${money(owe.extra)}</div>
+        `;
+
+        els.friendsContainer.appendChild(card);
+      });
+
+      renderWarnings();
+    }
+
+    function renderWarnings() {
+      const warnings = [];
+
+      for (const item of state.items) {
+        const assigned = getItemAssignedQty(item.id);
+        const diff = assigned - item.qty;
+
+        if (diff > 0.0001) {
+          warnings.push(`${item.name || "未命名项目"} 分配超出 ${diff.toFixed(2)} 份，请调整。`);
+        }
+      }
+
+      if (
+        state.paymentMethod === "noncash" &&
+        state.nonCashAmount > 0 &&
+        state.friends.length > state.nonCashSplitCount
+      ) {
+        const over = state.friends.length - state.nonCashSplitCount;
+        warnings.push(
+          `Non-cash 分摊人数（${state.nonCashSplitCount}）小于已添加朋友数（${state.friends.length}），会多收 ${over} 份。请确认。`
+        );
+      }
+
+      if (warnings.length) {
+        els.globalWarning.style.display = "block";
+        els.globalWarning.textContent = warnings.join(" ");
+      } else {
+        els.globalWarning.style.display = "none";
+        els.globalWarning.textContent = "";
+      }
+    }
+
+    function renderSummary() {
+      const bill = getBillParts();
+
+      els.subtotalValue.textContent = money(bill.subtotal);
+      els.taxValue.textContent = money(bill.tax);
+      els.tipValue.textContent = money(bill.tip);
+      els.nonCashValue.textContent = money(bill.nonCash);
+      els.nonCashPerPersonValue.textContent = money(bill.nonCashPerPerson);
+      els.totalValue.textContent = money(bill.total);
+
+      syncDecimalInput(els.taxRateInput, state.taxRate);
+      syncDecimalInput(els.tipRateInput, state.tipRate);
+      syncDecimalInput(els.nonCashAmountInput, state.nonCashAmount);
+      syncDecimalInput(els.nonCashSplitCountInput, state.nonCashSplitCount);
+
+      for (const btn of els.taxButtons) {
+        const val = toNumber(btn.dataset.tax);
+        btn.classList.toggle("active", Math.abs(val - state.taxRate) < 0.0001);
+      }
+
+      for (const btn of els.tipButtons) {
+        const val = toNumber(btn.dataset.tip);
+        btn.classList.toggle("active", Math.abs(val - state.tipRate) < 0.0001);
+      }
+
+      for (const btn of els.paymentButtons) {
+        btn.classList.toggle("active", btn.dataset.payment === state.paymentMethod);
+      }
+    }
+
+    function updateComputedDisplays() {
+      renderSummary();
+
+      state.items.forEach(item => {
+        const subtotalCell = document.querySelector(`[data-item-subtotal="${item.id}"]`);
+        const assignedCell = document.querySelector(`[data-item-assigned="${item.id}"]`);
+        const assigned = getItemAssignedQty(item.id);
+
+        if (subtotalCell) {
+          subtotalCell.textContent = money(Math.max(0, toNumber(item.price)) * Math.max(0, toNumber(item.qty)));
+        }
+
+        if (assignedCell) {
+          assignedCell.textContent = `${assigned.toFixed(2)} / ${Math.max(0, toNumber(item.qty)).toFixed(2)}`;
+        }
+
+        document.querySelectorAll(`[data-friend-item-name="${item.id}"]`).forEach(cell => {
+          cell.textContent = item.name || "(未命名项目)";
+        });
+
+        document.querySelectorAll(`[data-friend-item-price="${item.id}"]`).forEach(cell => {
+          cell.textContent = money(Math.max(0, toNumber(item.price)));
+        });
+
+        document.querySelectorAll(`[data-alloc-item="${item.id}"]`).forEach(input => {
+          const friendId = input.dataset.allocFriend;
+          const ownAlloc = friendId
+            ? Math.max(0, toNumber(state.friends.find(f => f.id === friendId)?.allocations[item.id]))
+            : 0;
+          input.max = getRemainingQty(item.id, friendId) + ownAlloc;
+        });
+
+        const pickerName = document.querySelector(`[data-picker-name="${item.id}"]`);
+        const pickerMeta = document.querySelector(`[data-picker-meta="${item.id}"]`);
+        const pickerInput = document.querySelector(`[data-new-friend-item="${item.id}"]`);
+        const pickerRemaining = getRemainingQty(item.id);
+
+        if (pickerName) {
+          pickerName.textContent = item.name || "(未命名项目)";
+        }
+
+        if (pickerMeta) {
+          pickerMeta.textContent = `${money(Math.max(0, toNumber(item.price)))} / 份，剩 ${formatQty(pickerRemaining)} / 共 ${formatQty(Math.max(0, toNumber(item.qty)))} 份`;
+        }
+
+        if (pickerInput) {
+          pickerInput.max = pickerRemaining;
+          pickerInput.setAttribute("aria-label", `${item.name || "未命名项目"} 的数量`);
+        }
+      });
+
+      state.friends.forEach(friend => {
+        state.items.forEach(item => {
+          const lineCell = document.querySelector(`[data-friend-line="${friend.id}:${item.id}"]`);
+          if (!lineCell) return;
+
+          const alloc = Math.max(0, toNumber(friend.allocations[item.id]));
+          lineCell.textContent = money(Math.max(0, toNumber(item.price)) * alloc);
+        });
+
+        const owe = getFriendOwe(friend);
+        const totalEl = document.querySelector(`[data-friend-total="${friend.id}"]`);
+        const noteEl = document.querySelector(`[data-friend-note="${friend.id}"]`);
+
+        if (totalEl) {
+          totalEl.textContent = money(owe.total);
+        }
+
+        if (noteEl) {
+          noteEl.textContent = `项目金额 ${money(owe.subtotal)} + 税费/小费/付款加价分摊 ${money(owe.extra)}`;
+        }
+      });
+
+      renderFriendOverview();
+      renderWarnings();
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function render() {
+      sanitizeData();
+      renderItems();
+      renderNewFriendPicker();
+      renderSummary();
+      renderFriends();
+    }
+
+    els.addItemBtn.addEventListener("click", () => {
+      state.items.push(createItem("新项目", 0, 1));
+      syncAllocationsForAllFriends();
+      render();
+    });
+
+    els.clearItemsBtn.addEventListener("click", () => {
+      state.items = [];
+      syncAllocationsForAllFriends();
+      render();
+    });
+
+    els.receiptImageInput.addEventListener("change", () => {
+      if (els.receiptImageInput.files && els.receiptImageInput.files[0]) {
+        els.ocrRawText.value = "";
+        setOcrStatus("图片已选择，点击“识别到文本框”。");
+        previewSelectedReceipt();
+      } else {
+        setOcrStatus("请先上传小票图片，再点击“识别到文本框”。");
+      }
+      updateOcrImportBtnState();
+    });
+
+    els.ocrModeSelect.addEventListener("change", () => {
+      previewSelectedReceipt();
+    });
+
+    els.ocrImportBtn.addEventListener("click", () => {
+      importItemsFromReceiptImage();
+    });
+
+    els.ocrRawText.addEventListener("input", () => {
+      updateOcrImportBtnState();
+    });
+
+    els.reparseOcrTextBtn.addEventListener("click", () => {
+      const text = els.ocrRawText.value.trim();
+      if (!text) {
+        setOcrStatus("文本框为空，无法添加到项目。", true);
+        return;
+      }
+
+      importParsedReceipt(parseReceiptData(text), "OCR 原文");
+      updateOcrImportBtnState();
+    });
+
+    els.itemsTbody.addEventListener("input", event => {
+      const target = event.target;
+
+      const nameId = target.dataset.itemName;
+      if (nameId) {
+        const item = state.items.find(x => x.id === nameId);
+        if (item) item.name = target.value;
+        updateComputedDisplays();
+        return;
+      }
+
+      const priceId = target.dataset.itemPrice;
+      if (priceId) {
+        const item = state.items.find(x => x.id === priceId);
+        if (item) item.price = toNumber(target.value);
+        updateComputedDisplays();
+        return;
+      }
+
+      const qtyId = target.dataset.itemQty;
+      if (qtyId) {
+        const item = state.items.find(x => x.id === qtyId);
+        if (item) item.qty = toNumber(target.value);
+        updateComputedDisplays();
+      }
+    });
+
+    els.itemsTbody.addEventListener("click", event => {
+      const target = event.target;
+      const removeId = target.dataset.removeItem;
+      if (!removeId) return;
+
+      state.items = state.items.filter(item => item.id !== removeId);
+      syncAllocationsForAllFriends();
+      render();
+    });
+
+    els.taxRateInput.addEventListener("input", () => {
+      state.taxRate = toDecimalInputNumber(els.taxRateInput.value);
+      updateComputedDisplays();
+    });
+
+    els.taxRateInput.addEventListener("blur", () => {
+      render();
+    });
+
+    els.taxButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.taxRate = toNumber(btn.dataset.tax);
+        updateComputedDisplays();
+      });
+    });
+
+    els.tipRateInput.addEventListener("input", () => {
+      state.tipRate = toDecimalInputNumber(els.tipRateInput.value);
+      updateComputedDisplays();
+    });
+
+    els.tipRateInput.addEventListener("blur", () => {
+      render();
+    });
+
+    els.tipButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.tipRate = toNumber(btn.dataset.tip);
+        updateComputedDisplays();
+      });
+    });
+
+    els.nonCashAmountInput.addEventListener("input", () => {
+      state.nonCashAmount = toDecimalInputNumber(els.nonCashAmountInput.value);
+      updateComputedDisplays();
+    });
+
+    els.nonCashAmountInput.addEventListener("blur", () => {
+      render();
+    });
+
+    els.nonCashSplitCountInput.addEventListener("input", () => {
+      state.nonCashSplitCount = Math.max(1, Math.floor(toNumber(els.nonCashSplitCountInput.value, 1)));
+      updateComputedDisplays();
+    });
+
+    els.nonCashSplitCountInput.addEventListener("blur", () => {
+      render();
+    });
+
+    els.nonCashSplitMinusBtn.addEventListener("click", () => {
+      state.nonCashSplitCount = Math.max(1, getNonCashSplitCount() - 1);
+      updateComputedDisplays();
+    });
+
+    els.nonCashSplitPlusBtn.addEventListener("click", () => {
+      state.nonCashSplitCount = getNonCashSplitCount() + 1;
+      updateComputedDisplays();
+    });
+
+    els.paymentButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.paymentMethod = btn.dataset.payment;
+        updateComputedDisplays();
+      });
+    });
+
+    els.addFriendBtn.addEventListener("click", () => {
+      const name = els.friendNameInput.value.trim();
+      const newFriend = createFriend(name || `朋友 ${state.friends.length + 1}`);
+
+      for (const item of state.items) {
+        const input = document.querySelector(`[data-new-friend-item="${item.id}"]`);
+        const rawQty = input ? toNumber(input.value) : 0;
+        const maxQty = Math.max(0, toNumber(item.qty));
+        const otherAllocated = state.friends.reduce((sum, f) => {
+          return sum + Math.max(0, toNumber(f.allocations[item.id]));
+        }, 0);
+        const remaining = Math.max(0, maxQty - otherAllocated);
+        const qty = Math.max(0, Math.min(rawQty, remaining));
+        newFriend.allocations[item.id] = qty;
+      }
+
+      state.friends.push(newFriend);
+      els.friendNameInput.value = "";
+      document.querySelectorAll("[data-new-friend-item]").forEach(input => {
+        input.value = 0;
+      });
+      render();
+    });
+
+    els.friendNameInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        els.addFriendBtn.click();
+      }
+    });
+
+    els.friendsContainer.addEventListener("input", event => {
+      const target = event.target;
+      const friendId = target.dataset.allocFriend;
+      const itemId = target.dataset.allocItem;
+      if (!friendId || !itemId) return;
+
+      const friend = state.friends.find(f => f.id === friendId);
+      if (!friend) return;
+
+      const item = state.items.find(x => x.id === itemId);
+      const maxQty = item ? Math.max(0, toNumber(item.qty)) : 0;
+      const otherAllocated = state.friends.reduce((sum, f) => {
+        if (f.id === friendId) return sum;
+        return sum + Math.max(0, toNumber(f.allocations[itemId]));
+      }, 0);
+      const remaining = Math.max(0, maxQty - otherAllocated);
+
+      const rawValue = Math.max(0, toNumber(target.value));
+      const clamped = Math.min(rawValue, remaining);
+      friend.allocations[itemId] = clamped;
+      if (rawValue > clamped) {
+        target.value = clamped;
+      }
+      updateComputedDisplays();
+    });
+
+    els.friendsContainer.addEventListener("click", event => {
+      const target = event.target;
+      const removeId = target.dataset.removeFriend;
+      if (!removeId) return;
+
+      state.friends = state.friends.filter(friend => friend.id !== removeId);
+      render();
+    });
+
+    updateOcrImportBtnState();
+    render();
+  </script>
+</body>
+</html>
