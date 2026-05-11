@@ -775,17 +775,25 @@
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" id="nonCashAmountRow">
         <label>Non-cash 加价金额
           <input id="nonCashAmountInput" type="text" inputmode="decimal" value="0" />
         </label>
       </div>
 
-      <div class="row" style="margin-top: 8px;">
-        <span>Non-cash 分摊人数：</span>
-        <button id="nonCashSplitMinusBtn" type="button" class="btn-ghost" aria-label="减少 Non-cash 分摊人数">-</button>
-        <input id="nonCashSplitCountInput" type="number" min="1" step="1" value="1" />
-        <button id="nonCashSplitPlusBtn" type="button" class="btn-ghost" aria-label="增加 Non-cash 分摊人数">+</button>
+      <div class="row" id="cashDiscountRateRow" style="margin-bottom: 6px;">
+        <span>Cash 折扣比例：</span>
+        <div class="rate-buttons">
+          <button type="button" class="rate-btn cash-discount-btn" data-cash-discount="0">无折扣</button>
+          <button type="button" class="rate-btn cash-discount-btn" data-cash-discount="5">5%（95折）</button>
+          <button type="button" class="rate-btn cash-discount-btn" data-cash-discount="10">10%（9折）</button>
+        </div>
+      </div>
+
+      <div class="row" id="cashDiscountCustomRow">
+        <label>自定义 Cash 折扣比例（%）
+          <input id="cashDiscountInput" type="text" inputmode="decimal" value="0" />
+        </label>
       </div>
 
       <div class="summary-grid">
@@ -806,8 +814,8 @@
           <div class="value money" id="nonCashValue">$0.00</div>
         </div>
         <div class="metric">
-          <div class="label">每人 Non-cash</div>
-          <div class="value money" id="nonCashPerPersonValue">$0.00</div>
+          <div class="label">Cash 折扣</div>
+          <div class="value money" id="cashDiscountValue">$0.00</div>
         </div>
         <div class="metric">
           <div class="label">总账单金额</div>
@@ -827,7 +835,7 @@
         <div id="newFriendDishPicker" class="new-dish-picker"></div>
         <div id="newFriendDishEmpty" class="empty">先添加菜品，再给朋友选择吃了哪些。</div>
       </div>
-      <p class="note">说明：每位朋友按相同顺序计算：项目金额 -> 税费份额 -> 每人 Non-cash 份额 -> 小费。</p>
+      <p class="note">说明：每位朋友按相同顺序计算：项目金额 -> 税费份额 -> Non-cash 份额（按菜价比例）-> 小费。</p>
       <div class="section-label">人员总览</div>
       <div id="friendOverview" class="people-overview" aria-live="polite"></div>
       <details id="assignmentDetails" class="assignment-details">
@@ -848,7 +856,7 @@
       tipRate: 15,
       paymentMethod: "cash",
       nonCashAmount: 0,
-      nonCashSplitCount: 1
+      cashDiscountRate: 0
     };
 
     let ocrWorking = false;
@@ -871,13 +879,14 @@
       taxValue: document.getElementById("taxValue"),
       tipRateInput: document.getElementById("tipRateInput"),
       nonCashAmountInput: document.getElementById("nonCashAmountInput"),
-      nonCashSplitMinusBtn: document.getElementById("nonCashSplitMinusBtn"),
-      nonCashSplitCountInput: document.getElementById("nonCashSplitCountInput"),
-      nonCashSplitPlusBtn: document.getElementById("nonCashSplitPlusBtn"),
+      nonCashAmountRow: document.getElementById("nonCashAmountRow"),
+      cashDiscountRateRow: document.getElementById("cashDiscountRateRow"),
+      cashDiscountCustomRow: document.getElementById("cashDiscountCustomRow"),
+      cashDiscountInput: document.getElementById("cashDiscountInput"),
       subtotalValue: document.getElementById("subtotalValue"),
       tipValue: document.getElementById("tipValue"),
       nonCashValue: document.getElementById("nonCashValue"),
-      nonCashPerPersonValue: document.getElementById("nonCashPerPersonValue"),
+      cashDiscountValue: document.getElementById("cashDiscountValue"),
       totalValue: document.getElementById("totalValue"),
       friendNameInput: document.getElementById("friendNameInput"),
       addFriendBtn: document.getElementById("addFriendBtn"),
@@ -889,7 +898,8 @@
       globalWarning: document.getElementById("globalWarning"),
       taxButtons: Array.from(document.querySelectorAll(".tax-btn")),
       tipButtons: Array.from(document.querySelectorAll(".tip-btn")),
-      paymentButtons: Array.from(document.querySelectorAll(".payment-btn"))
+      paymentButtons: Array.from(document.querySelectorAll(".payment-btn")),
+      cashDiscountButtons: Array.from(document.querySelectorAll(".cash-discount-btn"))
     };
 
     function createItem(name = "", price = 0, qty = 1) {
@@ -1365,17 +1375,18 @@
       return Math.max(0, state.nonCashAmount);
     }
 
-    function getNonCashSplitCount() {
-      return Math.max(1, Math.floor(toNumber(state.nonCashSplitCount, 1)));
+    function getCashDiscountAmount(subtotal) {
+      if (state.paymentMethod !== "cash") return 0;
+      const rate = Math.max(0, Math.min(100, state.cashDiscountRate));
+      return Math.max(0, subtotal) * rate / 100;
     }
 
     function getBillParts() {
       const subtotal = getSubtotal();
       const tax = getTaxAmount(subtotal);
       const nonCash = getNonCashAmount();
-      const nonCashSplitCount = getNonCashSplitCount();
-      const nonCashPerPerson = nonCash / nonCashSplitCount;
-      const beforeTip = subtotal + tax + nonCash;
+      const cashDiscount = getCashDiscountAmount(subtotal);
+      const beforeTip = subtotal + tax + nonCash - cashDiscount;
       const tip = getTipAmount(beforeTip);
       const total = beforeTip + tip;
 
@@ -1383,8 +1394,7 @@
         subtotal,
         tax,
         nonCash,
-        nonCashSplitCount,
-        nonCashPerPerson,
+        cashDiscount,
         beforeTip,
         tip,
         total
@@ -1403,9 +1413,10 @@
       const friendSubtotal = getFriendSubtotal(friend);
       const ratio = bill.subtotal > 0 ? friendSubtotal / bill.subtotal : 0;
       const friendTax = bill.tax * ratio;
-      const friendNonCash = bill.nonCashPerPerson;
-      const friendTip = getTipAmount(friendSubtotal + friendTax + friendNonCash);
-      const friendExtra = friendTax + friendNonCash + friendTip;
+      const friendNonCash = bill.nonCash * ratio;
+      const friendCashDiscount = bill.cashDiscount * ratio;
+      const friendTip = getTipAmount(friendSubtotal + friendTax + friendNonCash - friendCashDiscount);
+      const friendExtra = friendTax + friendNonCash - friendCashDiscount + friendTip;
 
       return {
         subtotal: friendSubtotal,
@@ -1418,7 +1429,7 @@
       state.taxRate = Math.max(0, toNumber(state.taxRate));
       state.tipRate = Math.max(0, toNumber(state.tipRate));
       state.nonCashAmount = Math.max(0, toNumber(state.nonCashAmount));
-      state.nonCashSplitCount = getNonCashSplitCount();
+      state.cashDiscountRate = Math.max(0, Math.min(100, toNumber(state.cashDiscountRate)));
       if (!["cash", "noncash"].includes(state.paymentMethod)) {
         state.paymentMethod = "cash";
       }
@@ -1616,17 +1627,6 @@
         }
       }
 
-      if (
-        state.paymentMethod === "noncash" &&
-        state.nonCashAmount > 0 &&
-        state.friends.length > state.nonCashSplitCount
-      ) {
-        const over = state.friends.length - state.nonCashSplitCount;
-        warnings.push(
-          `Non-cash 分摊人数（${state.nonCashSplitCount}）小于已添加朋友数（${state.friends.length}），会多收 ${over} 份。请确认。`
-        );
-      }
-
       if (warnings.length) {
         els.globalWarning.style.display = "block";
         els.globalWarning.textContent = warnings.join(" ");
@@ -1643,13 +1643,20 @@
       els.taxValue.textContent = money(bill.tax);
       els.tipValue.textContent = money(bill.tip);
       els.nonCashValue.textContent = money(bill.nonCash);
-      els.nonCashPerPersonValue.textContent = money(bill.nonCashPerPerson);
+      els.cashDiscountValue.textContent = bill.cashDiscount > 0
+        ? `-${money(bill.cashDiscount)}`
+        : money(0);
       els.totalValue.textContent = money(bill.total);
 
       syncDecimalInput(els.taxRateInput, state.taxRate);
       syncDecimalInput(els.tipRateInput, state.tipRate);
       syncDecimalInput(els.nonCashAmountInput, state.nonCashAmount);
-      syncDecimalInput(els.nonCashSplitCountInput, state.nonCashSplitCount);
+      syncDecimalInput(els.cashDiscountInput, state.cashDiscountRate);
+
+      const isCash = state.paymentMethod === "cash";
+      els.nonCashAmountRow.style.display = isCash ? "none" : "";
+      els.cashDiscountRateRow.style.display = isCash ? "" : "none";
+      els.cashDiscountCustomRow.style.display = isCash ? "" : "none";
 
       for (const btn of els.taxButtons) {
         const val = toNumber(btn.dataset.tax);
@@ -1663,6 +1670,11 @@
 
       for (const btn of els.paymentButtons) {
         btn.classList.toggle("active", btn.dataset.payment === state.paymentMethod);
+      }
+
+      for (const btn of els.cashDiscountButtons) {
+        const val = toNumber(btn.dataset.cashDiscount);
+        btn.classList.toggle("active", Math.abs(val - state.cashDiscountRate) < 0.0001);
       }
     }
 
@@ -1884,28 +1896,25 @@
       render();
     });
 
-    els.nonCashSplitCountInput.addEventListener("input", () => {
-      state.nonCashSplitCount = Math.max(1, Math.floor(toNumber(els.nonCashSplitCountInput.value, 1)));
-      updateComputedDisplays();
-    });
-
-    els.nonCashSplitCountInput.addEventListener("blur", () => {
-      render();
-    });
-
-    els.nonCashSplitMinusBtn.addEventListener("click", () => {
-      state.nonCashSplitCount = Math.max(1, getNonCashSplitCount() - 1);
-      updateComputedDisplays();
-    });
-
-    els.nonCashSplitPlusBtn.addEventListener("click", () => {
-      state.nonCashSplitCount = getNonCashSplitCount() + 1;
-      updateComputedDisplays();
-    });
-
     els.paymentButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         state.paymentMethod = btn.dataset.payment;
+        updateComputedDisplays();
+      });
+    });
+
+    els.cashDiscountInput.addEventListener("input", () => {
+      state.cashDiscountRate = toDecimalInputNumber(els.cashDiscountInput.value);
+      updateComputedDisplays();
+    });
+
+    els.cashDiscountInput.addEventListener("blur", () => {
+      render();
+    });
+
+    els.cashDiscountButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.cashDiscountRate = toNumber(btn.dataset.cashDiscount);
         updateComputedDisplays();
       });
     });
