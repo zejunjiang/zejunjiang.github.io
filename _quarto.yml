@@ -1,0 +1,22 @@
+project:
+  type: website
+  output-dir: docs
+  resources:
+    - bill-splitter/
+
+website:
+  title: "Zejun Jiang"
+  navbar:
+    left:
+      - href: index.qmd
+        text: About
+      - href: tools.qmd
+        text: Tools
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+    css: styles.css
+    toc: true

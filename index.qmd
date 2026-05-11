@@ -1,0 +1,33 @@
+---
+title: "About"
+---
+
+::: {.grid}
+::: {.g-col-6}
+![](files/linbei.jpg){width=75%}
+:::
+
+::: {.g-col-6}
+# Zejun Jiang
+
+Welcome to my website
+
+## Skills
+- Cadence
+- Matlab
+- GIS
+- Python
+- SQL
+- Data Visualization
+
+## Interests
+- Food
+- Travel
+- Photography
+- Video Games
+
+## Links
+
+[📧 Email](mailto:zej003@ucsd.edu)
+
+[💻 GitHub](https://github.com/zejunjiang)

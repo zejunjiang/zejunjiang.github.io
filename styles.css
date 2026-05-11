@@ -1,0 +1,23 @@
+.about .about-contents a {
+  display: inline-block;
+  margin: 6px 8px 6px 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background-color: #1f4e79;
+  color: white !important;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.about .about-contents a:hover {
+  background-color: #163a5f;
+  transform: translateY(-2px);
+}
+
+.navbar a {
+  color: #333 !important;
+}
+
+.navbar a:hover {
+  color: #1f4e79 !important;
+}

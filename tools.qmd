@@ -1,0 +1,17 @@
+---
+title: "Tools"
+---
+
+A collection of small web utilities I built for myself.
+
+::: {.grid}
+
+::: {.g-col-md-6 .g-col-12}
+### [AA 账单分摊助手](bill-splitter/)
+
+录入菜品、税费、小费，分摊给朋友，自动算出每个人应付多少。支持小票拍照 OCR 识别。
+
+[Open tool →](bill-splitter/){.btn .btn-primary}
+:::
+
+:::
