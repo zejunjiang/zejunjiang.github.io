@@ -796,6 +796,15 @@
         </label>
       </div>
 
+      <div class="row" style="margin-top: 10px;">
+        <span>总账单凑整：</span>
+        <div class="rate-buttons">
+          <button type="button" class="rate-btn rounding-btn" data-rounding="exact">精确</button>
+          <button type="button" class="rate-btn rounding-btn" data-rounding="ceil-1">向上凑整 $1</button>
+          <button type="button" class="rate-btn rounding-btn" data-rounding="ceil-5">向上凑整 $5</button>
+        </div>
+      </div>
+
       <div class="summary-grid">
         <div class="metric">
           <div class="label">菜品/饮料小计</div>
@@ -856,7 +865,8 @@
       tipRate: 15,
       paymentMethod: "cash",
       nonCashAmount: 0,
-      cashDiscountRate: 0
+      cashDiscountRate: 0,
+      roundingMode: "exact"
     };
 
     let ocrWorking = false;
@@ -899,7 +909,8 @@
       taxButtons: Array.from(document.querySelectorAll(".tax-btn")),
       tipButtons: Array.from(document.querySelectorAll(".tip-btn")),
       paymentButtons: Array.from(document.querySelectorAll(".payment-btn")),
-      cashDiscountButtons: Array.from(document.querySelectorAll(".cash-discount-btn"))
+      cashDiscountButtons: Array.from(document.querySelectorAll(".cash-discount-btn")),
+      roundingButtons: Array.from(document.querySelectorAll(".rounding-btn"))
     };
 
     function createItem(name = "", price = 0, qty = 1) {
@@ -1381,14 +1392,25 @@
       return Math.max(0, subtotal) * rate / 100;
     }
 
+    function roundTotal(amount) {
+      switch (state.roundingMode) {
+        case "ceil-1": return Math.ceil(amount);
+        case "ceil-5": return Math.ceil(amount / 5) * 5;
+        case "exact":
+        default: return amount;
+      }
+    }
+
     function getBillParts() {
       const subtotal = getSubtotal();
       const tax = getTaxAmount(subtotal);
       const nonCash = getNonCashAmount();
       const cashDiscount = getCashDiscountAmount(subtotal);
       const beforeTip = subtotal + tax + nonCash - cashDiscount;
-      const tip = getTipAmount(beforeTip);
-      const total = beforeTip + tip;
+      const originalTip = getTipAmount(beforeTip);
+      const originalTotal = beforeTip + originalTip;
+      const total = roundTotal(originalTotal);
+      const tip = total - beforeTip;
 
       return {
         subtotal,
@@ -1415,7 +1437,7 @@
       const friendTax = bill.tax * ratio;
       const friendNonCash = bill.nonCash * ratio;
       const friendCashDiscount = bill.cashDiscount * ratio;
-      const friendTip = getTipAmount(friendSubtotal + friendTax + friendNonCash - friendCashDiscount);
+      const friendTip = bill.tip * ratio;
       const friendExtra = friendTax + friendNonCash - friendCashDiscount + friendTip;
 
       return {
@@ -1676,6 +1698,10 @@
         const val = toNumber(btn.dataset.cashDiscount);
         btn.classList.toggle("active", Math.abs(val - state.cashDiscountRate) < 0.0001);
       }
+
+      for (const btn of els.roundingButtons) {
+        btn.classList.toggle("active", btn.dataset.rounding === state.roundingMode);
+      }
     }
 
     function updateComputedDisplays() {
@@ -1915,6 +1941,13 @@
     els.cashDiscountButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         state.cashDiscountRate = toNumber(btn.dataset.cashDiscount);
+        updateComputedDisplays();
+      });
+    });
+
+    els.roundingButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.roundingMode = btn.dataset.rounding;
         updateComputedDisplays();
       });
     });
